@@ -18,15 +18,15 @@ def difference(gt, pred):
     :return: the difference graph
     '''
     f = Digraph(graph_attr={'rankdir': 'LR'})
-    new_edges = [ed for ed in pred if ed not in gt]  # predicted edge not in ground truth
+    new_edges = [ed for ed in pred if ed not in gt]  # DOC predicted edge not in ground truth
     f.attr('edge', color='blue')
     f.edges(new_edges)
 
-    missed_edges = [ed for ed in gt if ed not in pred]  # edge in ground truth not predicted
+    missed_edges = [ed for ed in gt if ed not in pred]  # DOC edge in ground truth not predicted
     f.attr('edge', color='red')
     f.edges(missed_edges)
 
-    recovered_edges = [ed for ed in pred if ed in gt]  # predicted edge in ground truth
+    recovered_edges = [ed for ed in pred if ed in gt]  # DOC predicted edge in ground truth
     f.attr('edge', color='green')
     f.edges(recovered_edges)
     return f

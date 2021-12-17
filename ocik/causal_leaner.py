@@ -36,10 +36,13 @@ def has_influence(src: str, dst: list, cond_node: list, env, do_size=200, alpha=
     n_node = len(cond_node)
     n = 2 ** n_node  # number of combinations
     binaries = [f"%0{n_node}d" % int(format(i, f'#0{n}b')[2:]) for i in range(n)]  # write in binary
+    print(f'binaries = {binaries}')
     conditional_evidences = [{cond_node[i]: int(b[i]) for i in range(len(cond_node))} for b in binaries]
+    print(f'conditional_evidences for {src} on {dst} = {conditional_evidences}')
     test = {node: [] for node in dst}
     for cond_evidence in conditional_evidences:
         res = simulate(src, dst, env, cond_evidence, do_size=do_size)
+        print(f'res of {cond_evidence} = {res}')
         for node in dst:
             test[node].append(chisquare(f_obs=res[0][node], f_exp=res[1][node])[1] <= alpha)
     influence = {node: any(test[node]) for node in dst}
@@ -87,23 +90,25 @@ class CausalLeaner:
             #######################################
             #  is there a causal relationship?    #
             #######################################
-            if lim_neighbors == 0:
+            if lim_neighbors == 0:  # DOC start without conditioning neighbours (?)
                 #  precompute influence between node  #
                 influence = {}
                 for node in doable:
-                    influence[node] = has_influence(node, list(graph.neighbors(node)),
-                                                    [], self.env, do_size=do_size,
+                    influence[node] = has_influence(node, list(graph.neighbors(node)),  # DOC influence of node on neighbours
+                                                    [], self.env, do_size=do_size,  # DOC empty list ? no conditioning nodes
                                                     alpha=do_conf)
+
+                print(f'influence: {influence}')
 
                 #  delete node base on influence result  #
                 edges = list(graph.edges())
                 for i, (X, Y) in enumerate(edges):
-                    if X in doable:
+                    if X in doable:  # DOC check influence of do-able nodes
                         X2Y = influence[X][Y]
                         if not X2Y and graph.has_edge(X, Y):
                             graph.remove_edge(X, Y)
-                            # print('do', X, Y, 'remove')
-                    else:
+                            print('do', X, Y, 'remove')
+                    else:  # DOC check influence of NON do-able nodes
                         if ci_test(X, Y, [], data=self.obs_data, significance_level=ci_conf):
                             graph.remove_edge(X, Y)
                             print('ci', X, Y, 'remove')
@@ -111,20 +116,21 @@ class CausalLeaner:
             #######################################
             #      what if we block k path        #
             #######################################
-            elif lim_neighbors > 0:
+            elif lim_neighbors > 0:  # DOC condition K neighbours (?)
                 #  precompute influence between node  #
                 influence = {}
                 for node in doable:
                     neigh = set(graph.neighbors(node))
                     all_sep_set = set()
-                    for v in neigh:
+                    for v in neigh:  # DOC for each neighbour, combinations of K do-able other (not v) neighbours
                         all_sep_set = all_sep_set | set(combinations(set(graph.neighbors(node))
                                                                      - {v} - non_doable, lim_neighbors))
 
+                    print(f'node = {node} => all_sep_set = {list(all_sep_set)}')
                     influence[node] = {}
-                    for sep_set in list(all_sep_set):
+                    for sep_set in list(all_sep_set):  # DOC for each combination
                         on = neigh - set(sep_set)
-                        if len(on) > 0:
+                        if len(on) > 0:  # DOC check influence of node on remaining neighbours (no sep_set) conditioning on sep_set
                             influence[node][sep_set] = has_influence(node, list(on), sep_set, self.env,
                                                                      do_size=do_size, alpha=do_conf)
 
