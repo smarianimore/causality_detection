@@ -12,7 +12,8 @@ def simulate(src: str, dst: list, env, cond_evidence: dict = {}, do_size=100):
     fix src node value and do many simulation and return the data
     """
     result = {}
-    evidences = [{src: value, **cond_evidence} for value in [0, 1]]
+    evidences = [{src: value, **cond_evidence} for value in [0, 1]]  # QUESTION: is the hardcoded value the admissible observed value (on/off)?
+    print(f'\t\tevidencies for {src}: {evidences}')
 
     for i, evidence in enumerate(evidences):
         do_result = env.do_evidence(evidence=evidence, size=do_size)
@@ -29,22 +30,34 @@ def simulate(src: str, dst: list, env, cond_evidence: dict = {}, do_size=100):
     return result
 
 
-def has_influence(src: str, dst: list, cond_node: list, env, do_size=200, alpha=0.05):
+def has_influence(src: str,  # DOC: node to intervene on
+                  dst: list,  # DOC: nodes to check whether src has influence on
+                  cond_node: list,  # DOC: list of conditioning nodes
+                  env,  # DOC: whole Bayesian network (with CPD)
+                  do_size=200,
+                  alpha=0.05):
     """
     test if src node have causal effect on dst node
     """
     n_node = len(cond_node)
     n = 2 ** n_node  # number of combinations
-    binaries = [f"%0{n_node}d" % int(format(i, f'#0{n}b')[2:]) for i in range(n)]  # write in binary
-    print(f'binaries = {binaries}')
+    binaries = [f"%0{n_node}d" % int(format(i, f'#0{n}b')[2:]) for i in range(n)]  # write in binary QUESTION: what is?
+    print(f'\tbinaries = {binaries}')
     conditional_evidences = [{cond_node[i]: int(b[i]) for i in range(len(cond_node))} for b in binaries]
-    print(f'conditional_evidences for {src} on {dst} = {conditional_evidences}')
+    print(f'\tconditional_evidences for {src} on {dst} = {conditional_evidences}')  # QUESTION: are these the combinations of values for conditioning variables?
     test = {node: [] for node in dst}
     for cond_evidence in conditional_evidences:
         res = simulate(src, dst, env, cond_evidence, do_size=do_size)
-        print(f'res of {cond_evidence} = {res}')
+        #  QUESTION: is res format
+        #       {src_node_val: {dst_node_1: [#_times_0, #_times_1], ...}}
+        #       ?
+        print(f'\tres of {cond_evidence} = {res}')
         for node in dst:
-            test[node].append(chisquare(f_obs=res[0][node], f_exp=res[1][node])[1] <= alpha)
+            # QUESTION: what is the hardcoded index?
+            test[node].append(chisquare(
+                f_obs=res[0][node],  # DOC: observed distribution
+                f_exp=res[1][node]  # DOC: expected distribution
+            )[1] <= alpha)  # DOC: p-value of test <= chosen confidence interval
     influence = {node: any(test[node]) for node in dst}
     return influence
 
@@ -59,7 +72,11 @@ class CausalLeaner:
         if len(non_dobale) != 0 and obs_data is None:
             raise Exception('with non doable variables we need observational data')
 
-    def learn(self, do_size=100, do_conf=0.4, ci_conf=0.1, max_cond_vars=4, post=True, trace=False, verbose=False):
+    def learn(self, do_size=100,
+              do_conf=0.4,
+              ci_conf=0.1,
+              max_cond_vars=4,  # DOC: max # of vars to condition (incrementally, through lim_neighbours = Order)
+              post=True, trace=False, verbose=False):
         # Initialize initial values and structures.
         ci_test = ci_chi2
         lim_neighbors = 0
@@ -90,12 +107,12 @@ class CausalLeaner:
             #######################################
             #  is there a causal relationship?    #
             #######################################
-            if lim_neighbors == 0:  # DOC start without conditioning neighbours (?)
+            if lim_neighbors == 0:  # DOC start without conditioning neighbours
                 #  precompute influence between node  #
                 influence = {}
                 for node in doable:
                     influence[node] = has_influence(node, list(graph.neighbors(node)),  # DOC influence of node on neighbours
-                                                    [], self.env, do_size=do_size,  # DOC empty list ? no conditioning nodes
+                                                    [], self.env, do_size=do_size,  # DOC empty list -> no conditioning nodes
                                                     alpha=do_conf)
 
                 print(f'influence: {influence}')
@@ -116,13 +133,13 @@ class CausalLeaner:
             #######################################
             #      what if we block k path        #
             #######################################
-            elif lim_neighbors > 0:  # DOC condition K neighbours (?)
+            elif lim_neighbors > 0:  # DOC condition K = lim_neighbours neighbours
                 #  precompute influence between node  #
                 influence = {}
                 for node in doable:
                     neigh = set(graph.neighbors(node))
                     all_sep_set = set()
-                    for v in neigh:  # DOC for each neighbour, combinations of K do-able other (not v) neighbours
+                    for v in neigh:  # DOC for each neighbour v, combinations of K do-able other (not v) neighbours
                         all_sep_set = all_sep_set | set(combinations(set(graph.neighbors(node))
                                                                      - {v} - non_doable, lim_neighbors))
 
@@ -142,7 +159,7 @@ class CausalLeaner:
                                 set(combinations(set(graph.neighbors(X)) - {Y}, lim_neighbors))
                         ):
                             if len(non_doable & set(separating_set)) == 0:
-                                # print('test :', X, '->', Y, 'sep:', separating_set)
+                                print('test :', X, '->', Y, 'sep:', separating_set)
                                 # If a conditioning set exists remove the edge, store the
                                 # separating set and move on to finding conditioning set for next edge.
                                 the_sep_set = None
@@ -156,7 +173,7 @@ class CausalLeaner:
                                 X2Y = influence[X][the_sep_set][Y]
                                 if not X2Y and graph.has_edge(X, Y):
                                     graph.remove_edge(X, Y)
-                                    # print('do', X, Y, 'remove')
+                                    print('do', X, Y, 'remove')
                             else:
                                 if ci_test(X, Y, separating_set, data=self.obs_data, significance_level=ci_conf) \
                                         and graph.has_edge(X, Y):
@@ -164,7 +181,7 @@ class CausalLeaner:
                                     print('ci', X, Y, 'remove')
                                     break
 
-                    else:
+                    else: # DOC node X is NOT do-able
                         undir_graph = graph.to_undirected()
                         for separating_set in list(
                                 set(combinations(set(undir_graph.neighbors(X)) - {Y}, lim_neighbors)) | \

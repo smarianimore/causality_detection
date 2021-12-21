@@ -1,0 +1,28 @@
+CAUSAL_LEARNER
+
+def learn(self, 
+	do_size=100, # ???
+	do_conf=0.4, 
+	ci_conf=0.1, 
+	max_cond_vars=4, # DOC: max # of vars to condition (incrementally, through lim_neighbours = Order)
+	post=True, trace=False, verbose=False):
+	
+def has_influence(src: str, # DOC: node to intervene on
+	dst: list, # DOC: nodes to check whether src has influence on
+	cond_node: list, # DOC: list of conditioning nodes
+	env, # DOC: whole Bayesian network (with CPD)
+	do_size=200, # ??? 
+	alpha=0.05): # DOC: chi-square test confidence
+	
+def simulate(src: str, # DOC: node to intervene on
+	dst: list, # DOC: nodes to check whether src has influence on
+	env, # DOC: whole Bayesian network (with CPD)
+	cond_evidence: dict = {}, # ???
+	do_size=100): # ???
+	
+NETWORK
+
+def do_evidence(self, 
+	evidence=None, # DOC: {src: value, **cond_evidence}
+	size=100, # DOC: same as do_size
+	seed=12):
