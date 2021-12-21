@@ -21,7 +21,7 @@ def simulate(src: str, dst: list, env, cond_evidence: dict = {}, do_size=100):
         ev = evidence[src]
         result[ev] = {}
         for node in dst:
-            counts = do_result[node].value_counts()
+            counts = do_result[node].value_counts()  # DOC: count occurrences of values (0/1 in this case) simulated by do_evidence()
             a = counts[0] + 1 if 0 in counts.index else 1
             b = counts[1] + 1 if 1 in counts.index else 1  # for a beta dist we need to add 1
             # _, _, mod = beta_dist(a, b)
@@ -115,7 +115,7 @@ class CausalLeaner:
                                                     [], self.env, do_size=do_size,  # DOC empty list -> no conditioning nodes
                                                     alpha=do_conf)
 
-                print(f'influence: {influence}')
+                print(f'[k = 0 case] influence: {influence}')
 
                 #  delete node base on influence result  #
                 edges = list(graph.edges())
@@ -151,6 +151,8 @@ class CausalLeaner:
                             influence[node][sep_set] = has_influence(node, list(on), sep_set, self.env,
                                                                      do_size=do_size, alpha=do_conf)
 
+                print(f'[k > 0 case] influence: {influence}')
+
                 #  delete node base on influence result  #
                 edges = list(graph.edges())
                 for (X, Y) in edges:
@@ -159,7 +161,7 @@ class CausalLeaner:
                                 set(combinations(set(graph.neighbors(X)) - {Y}, lim_neighbors))
                         ):
                             if len(non_doable & set(separating_set)) == 0:
-                                print('test :', X, '->', Y, 'sep:', separating_set)
+                                print('[doable case] test :', X, '->', Y, 'sep:', separating_set)
                                 # If a conditioning set exists remove the edge, store the
                                 # separating set and move on to finding conditioning set for next edge.
                                 the_sep_set = None
@@ -190,7 +192,7 @@ class CausalLeaner:
                             if ci_test(X, Y, separating_set, data=self.obs_data, significance_level=ci_conf) \
                                     and graph.has_edge(X, Y):
                                 graph.remove_edge(X, Y)
-                                print('ci', X, Y, 'remove')
+                                print('[non-doable case] ci', X, Y, 'remove')
                                 break
 
             # Step 3: After iterating over all the edges, expand the search space by increasing the size

@@ -26,3 +26,6 @@ def do_evidence(self,
 	evidence=None, # DOC: {src: value, **cond_evidence}
 	size=100, # DOC: same as do_size
 	seed=12):
+	
+def _sample(self, 
+	evidence: dict = None):

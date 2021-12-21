@@ -128,10 +128,11 @@ class BayesianNetwork:
             evidence = evidence.copy()
 
         node_available = set([]) | set(evidence.keys())
-        to_compute = set(self.G.nodes()) - set(evidence.keys())
+        to_compute = set(self.G.nodes()) - set(evidence.keys())  # DOC: non-conditioned nodes
 
         data = dict(self.G.nodes(data=True))
-        dependancies = {node: d for node, d in data.items()}
+        #print(f'\t\t\t\tnodes data: {data}')  # NB: this method is executed many many times, print carefully!
+        dependancies = {node: d for node, d in data.items()}  # QUESTION: are d the parents of node?
 
         for node in self.node_sort:
             if node in to_compute:
@@ -142,14 +143,14 @@ class BayesianNetwork:
 
                 node_1 = self.name(node, 1)
                 node_0 = self.name(node, 0)
-                if len(dependancies[node]['par']) == 0:
+                if len(dependancies[node]['par']) == 0:  # QUESTION: no parents?
                     prob_1, prob_0 = cpd[node_1][cpd.index[0]], cpd[node_0][cpd.index[0]]
                 else:
                     select = tuple(evidence[p] for p in par)
                     prob = cpd.loc[select]
                     prob_1, prob_0 = prob[node_1], prob[node_0]
 
-                evidence[node] = np.random.choice([1, 0], p=[prob_1, prob_0])
+                evidence[node] = np.random.choice([1, 0], p=[prob_1, prob_0])  # QUESTION: hard-coded simulated values?
                 node_available = node_available | {node}
                 to_compute = to_compute - {node}
 
@@ -174,6 +175,7 @@ class BayesianNetwork:
         df = pd.DataFrame({node: [] for node in sorted(self.G.nodes())}).astype(int)
         for i in range(size):
             df = pd.concat((df, self._sample(evidence)))
+        #print(f'\t\t\tsimulated data: {df.head()}')  # DOC: simulated values (0/1 in this case)
         df.reset_index(drop=True, inplace=True)
 
         return df
