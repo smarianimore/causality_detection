@@ -120,7 +120,7 @@ class BayesianNetwork:
 
     def _sample(self, evidence: dict = None):
         """
-        generate one simulation data. propagate data from node without parent to all the network
+        generate one simulation data. propagate data from node without parent to all the network  # QUESTION: using CPD?
         """
         if evidence is None:
             evidence = {}

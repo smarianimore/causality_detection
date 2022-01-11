@@ -53,7 +53,7 @@ def has_influence(src: str,  # DOC: node to intervene on
         #       ?
         print(f'\tres of {cond_evidence} = {res}')
         for node in dst:
-            # QUESTION: what is the hardcoded index?
+            # QUESTION: what is the hardcoded index? is it the value assumed by the variable? what if it is not boolean?
             test[node].append(chisquare(
                 f_obs=res[0][node],  # DOC: observed distribution
                 f_exp=res[1][node]  # DOC: expected distribution
@@ -213,7 +213,7 @@ class CausalLeaner:
         if not trace:
             return G
         else:
-            return G, track # add last graph
+            return G, track  # add last graph
 
     def postprocessing(self, graph: nx.DiGraph):
         non_decidable_arrow = []
