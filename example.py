@@ -37,7 +37,7 @@ bn = room.get_network()
 # obs_data = bn.sample(5000)
 obs_data = pd.read_csv('tmp/room.csv')
 
-estimator = CausalLeaner(bn.nodes(), non_dobale=['L', 'T'], env=bn, obs_data=obs_data)
+estimator = CausalLeaner(bn.nodes(), non_dobale=['L', 'T'], env=bn, obs_data=obs_data)  # DOC you can give as env an iCasa instantiation and the learner works! (BUT change do to do_evidence)
 model, trace = estimator.learn(max_cond_vars=4, do_size=100, trace=True, verbose=True)
 
 dot = difference(bn.edges(), model.edges())

@@ -122,7 +122,7 @@ class iCasa:
 
         return self.fetch_data()
 
-    def do(self, evidence, size=10, seed=12, resp_time=3, verbose=True):
+    def do(self, evidence, size=10, seed=12, resp_time=3, verbose=True):  # NB: change to do_evidence for usage with learner??
         np.random.seed(seed)
 
         if evidence is None:

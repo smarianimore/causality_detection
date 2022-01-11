@@ -12,7 +12,7 @@ def simulate(src: str, dst: list, env, cond_evidence: dict = {}, do_size=100):
     fix src node value and do many simulation and return the data
     """
     result = {}
-    evidences = [{src: value, **cond_evidence} for value in [0, 1]]  # QUESTION: is the hardcoded value the admissible observed value (on/off)?
+    evidences = [{src: value, **cond_evidence} for value in [0, 1]]  # DOC hardo-coded value of variables (here they're all boolean)
     print(f'\t\tevidencies for {src}: {evidences}')
 
     for i, evidence in enumerate(evidences):
@@ -41,19 +41,18 @@ def has_influence(src: str,  # DOC: node to intervene on
     """
     n_node = len(cond_node)
     n = 2 ** n_node  # number of combinations
-    binaries = [f"%0{n_node}d" % int(format(i, f'#0{n}b')[2:]) for i in range(n)]  # write in binary QUESTION: what is?
+    binaries = [f"%0{n_node}d" % int(format(i, f'#0{n}b')[2:]) for i in range(n)]  # write in binary  # DOC apparently, it's a clever way for generating the range of combinations...
     print(f'\tbinaries = {binaries}')
     conditional_evidences = [{cond_node[i]: int(b[i]) for i in range(len(cond_node))} for b in binaries]
-    print(f'\tconditional_evidences for {src} on {dst} = {conditional_evidences}')  # QUESTION: are these the combinations of values for conditioning variables?
+    print(f'\tconditional_evidences for {src} on {dst} = {conditional_evidences}')  # DOC ...combinations of values for conditioning variables?
     test = {node: [] for node in dst}
     for cond_evidence in conditional_evidences:
         res = simulate(src, dst, env, cond_evidence, do_size=do_size)
-        #  QUESTION: is res format
+        #  DOC: res format is
         #       {src_node_val: {dst_node_1: [#_times_0, #_times_1], ...}}
-        #       ?
         print(f'\tres of {cond_evidence} = {res}')
         for node in dst:
-            # QUESTION: what is the hardcoded index? is it the value assumed by the variable? what if it is not boolean?
+            # DOC: you don't care what is expected and what is observed, you only care about difference in distributions, hence you could even swap
             test[node].append(chisquare(
                 f_obs=res[0][node],  # DOC: observed distribution
                 f_exp=res[1][node]  # DOC: expected distribution

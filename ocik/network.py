@@ -120,7 +120,7 @@ class BayesianNetwork:
 
     def _sample(self, evidence: dict = None):
         """
-        generate one simulation data. propagate data from node without parent to all the network  # QUESTION: using CPD?
+        generate one simulation data. propagate data from node without parent to all the network
         """
         if evidence is None:
             evidence = {}
@@ -150,7 +150,7 @@ class BayesianNetwork:
                     prob = cpd.loc[select]
                     prob_1, prob_0 = prob[node_1], prob[node_0]
 
-                evidence[node] = np.random.choice([1, 0], p=[prob_1, prob_0])  # QUESTION: hard-coded simulated values?
+                evidence[node] = np.random.choice([1, 0], p=[prob_1, prob_0])  # DOC hard-coded simulated values
                 node_available = node_available | {node}
                 to_compute = to_compute - {node}
 
